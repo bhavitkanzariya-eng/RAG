@@ -120,6 +120,10 @@ export async function POST(
     const fileName = `${timestamp}-${randomStr}-${file.name}`;
     const filePath = `/documents/${chatbotId}/${fileName}`;
 
+    // Pre-emptively ensure file_type column exists
+    console.log('📝 Ensuring file_type column exists...');
+    await ensureFileTypeColumn();
+
     try {
       const document = await documentsDB.createDocument(
         chatbotId,
@@ -136,10 +140,10 @@ export async function POST(
         { status: 201 }
       );
     } catch (createError) {
-      // If error is about missing file_type column, try to add it and retry
+      // If error is still about missing file_type column, try to add it and retry
       const errorMessage = createError instanceof Error ? createError.message : '';
       if (errorMessage.includes('file_type') || errorMessage.includes('does not exist')) {
-        console.log('📝 Attempting to add missing file_type column...');
+        console.log('📝 Re-attempting to add missing file_type column...');
         await ensureFileTypeColumn();
 
         // Retry creating the document
@@ -154,7 +158,7 @@ export async function POST(
         );
 
         return NextResponse.json(
-          { success: true, data: document, message: 'Document uploaded successfully' },
+          { success: true, data: document, message: 'Document uploaded successfully (after schema fix)' },
           { status: 201 }
         );
       }
