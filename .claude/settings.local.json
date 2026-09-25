@@ -22,7 +22,10 @@
       "Bash(npm run:*)",
       "Bash(curl -s http://localhost:3000/)",
       "Bash(curl -s http://localhost:3000/sign-up)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(vercel link:*)",
+      "Bash(curl -s https://rag-bw1co7itr-bhavitkanzariya-engs-projects.vercel.app/)",
+      "Bash(curl:*)"
     ]
   }
 }
