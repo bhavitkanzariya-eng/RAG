@@ -26,7 +26,14 @@
       "Bash(vercel link:*)",
       "Bash(curl -s https://rag-bw1co7itr-bhavitkanzariya-engs-projects.vercel.app/)",
       "Bash(curl:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(vercel --version)",
+      "Bash(vercel status:*)",
+      "Bash(vercel promote:*)",
+      "Bash(vercel alias:*)",
+      "Bash(mkdir -p \"/Users/apple/Documents/RAGSYSTEM/app/api/chatbots/[id]/documents\")",
+      "Bash(cp \"/Users/apple/Documents/RAGSYSTEM/app/api/chatbots/\\\\[id\\\\]/documents/route.ts\" \"/Users/apple/Documents/RAGSYSTEM/app/api/chatbots/[id]/documents/route.ts\")",
+      "Bash(rm -rf \"/Users/apple/Documents/RAGSYSTEM/app/api/chatbots/\\\\[id\\\\]\")"
     ]
   }
 }
