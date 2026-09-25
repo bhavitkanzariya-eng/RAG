@@ -86,6 +86,12 @@ CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation
 CREATE INDEX IF NOT EXISTS idx_chunks_embedding ON document_chunks USING ivfflat (content_embedding vector_cosine_ops) WITH (lists = 100);
 `;
 
+// Migration to add missing columns
+const ALTER_MIGRATIONS_SQL = `
+-- Add file_type column if it doesn't exist
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_type VARCHAR(50);
+`;
+
 export async function runMigrations(): Promise<void> {
   const pool = getPool();
   const client = await pool.connect();
@@ -93,7 +99,11 @@ export async function runMigrations(): Promise<void> {
   try {
     console.log('🔧 Running database migrations...');
     await client.query(SCHEMA_SQL);
-    console.log('✅ Migrations completed successfully');
+    console.log('✅ Schema migrations completed');
+
+    // Run alter migrations
+    await client.query(ALTER_MIGRATIONS_SQL);
+    console.log('✅ Alter migrations completed');
   } catch (error) {
     console.error('❌ Migration failed:', error);
     throw error;
