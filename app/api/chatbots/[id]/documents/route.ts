@@ -2,6 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import * as documentsDB from '@/lib/db/documents';
 import * as chatbotsDB from '@/lib/db/chatbots';
+import { getPool } from '@/lib/db/connection';
+
+// Helper function to ensure file_type column exists
+async function ensureFileTypeColumn() {
+  try {
+    const pool = getPool();
+    const client = await pool.connect();
+    try {
+      await client.query(
+        `ALTER TABLE documents ADD COLUMN IF NOT EXISTS file_type VARCHAR(50);`
+      );
+      console.log('✅ file_type column ensured');
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    console.error('Error ensuring file_type column:', error);
+  }
+}
 
 export async function GET(
   _request: NextRequest,
@@ -101,20 +120,46 @@ export async function POST(
     const fileName = `${timestamp}-${randomStr}-${file.name}`;
     const filePath = `/documents/${chatbotId}/${fileName}`;
 
-    const document = await documentsDB.createDocument(
-      chatbotId,
-      userId,
-      fileName,
-      file.name,
-      file.type,
-      fileSize,
-      filePath
-    );
+    try {
+      const document = await documentsDB.createDocument(
+        chatbotId,
+        userId,
+        fileName,
+        file.name,
+        file.type,
+        fileSize,
+        filePath
+      );
 
-    return NextResponse.json(
-      { success: true, data: document, message: 'Document uploaded successfully' },
-      { status: 201 }
-    );
+      return NextResponse.json(
+        { success: true, data: document, message: 'Document uploaded successfully' },
+        { status: 201 }
+      );
+    } catch (createError) {
+      // If error is about missing file_type column, try to add it and retry
+      const errorMessage = createError instanceof Error ? createError.message : '';
+      if (errorMessage.includes('file_type') || errorMessage.includes('does not exist')) {
+        console.log('📝 Attempting to add missing file_type column...');
+        await ensureFileTypeColumn();
+
+        // Retry creating the document
+        const document = await documentsDB.createDocument(
+          chatbotId,
+          userId,
+          fileName,
+          file.name,
+          file.type,
+          fileSize,
+          filePath
+        );
+
+        return NextResponse.json(
+          { success: true, data: document, message: 'Document uploaded successfully' },
+          { status: 201 }
+        );
+      }
+      throw createError;
+    }
   } catch (error) {
     console.error('Error uploading document:', error);
     return NextResponse.json(
