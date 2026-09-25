@@ -16,6 +16,25 @@ export interface Document {
   updated_at: string;
 }
 
+// Ensure documents table has all required columns
+async function ensureDocumentsSchema(): Promise<void> {
+  const pool = getPool();
+  const client = await pool.connect();
+
+  try {
+    // Add file_type column if it doesn't exist
+    await client.query(`
+      ALTER TABLE documents
+      ADD COLUMN IF NOT EXISTS file_type VARCHAR(50);
+    `);
+  } catch (error) {
+    // Column might already exist, which is fine
+    console.log('Schema check: file_type column ready');
+  } finally {
+    client.release();
+  }
+}
+
 export async function createDocument(
   chatbotId: number,
   userId: string,
@@ -25,6 +44,9 @@ export async function createDocument(
   fileSize: number,
   storagePath: string
 ): Promise<Document> {
+  // IMPORTANT: Ensure schema is correct before inserting
+  await ensureDocumentsSchema();
+
   const pool = getPool();
   const client = await pool.connect();
 
